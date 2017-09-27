@@ -238,6 +238,7 @@ def create_pool(batch_client, pool_id, vm_size, vm_count, app_files):
   :param str pool_id: The id of the pool to create.
   :param str vm_size: vm size (sku)
   :param int vm_count: number of vms to allocate
+  :param list app_files: The list of all the other scripts to upload.
   """
   # pick the latest supported 16.04 sku for UbuntuServer
   sku_to_use, image_ref_to_use = \
@@ -248,19 +249,6 @@ def create_pool(batch_client, pool_id, vm_size, vm_count, app_files):
             elevation_level=batchmodels.ElevationLevel.admin)
   task_commands = get_list_from_file('start_commands')
   print(task_commands)
-  #task_commands = [
-  #  # Copy the python_tutorial_task.py script to the "shared" directory
-  #  # that all tasks that run on the node have access to. Note that
-  #  # we are using the -p flag with cp to preserve the file uid/gid,
-  #  # otherwise since this start task is run as an admin, it would not
-  #  # be accessible by tasks run as a non-admin user.
-  #  'cp -pr $AZ_BATCH_TASK_WORKING_DIR/* $AZ_BATCH_NODE_SHARED_DIR',
-  #  # Install pip
-  #  'curl -fSsL https://bootstrap.pypa.io/get-pip.py | python',
-  #  # Install the azure-storage module so that the task script can access
-  #  # Azure Blob storage, pre-cryptography version
-  #  'pip install azure-storage==0.32.0',
-  #  'pip install numpy']
   pool = batchmodels.PoolAddParameter(
     id=pool_id,
     virtual_machine_configuration=batchmodels.VirtualMachineConfiguration(
@@ -277,8 +265,8 @@ def create_pool(batch_client, pool_id, vm_size, vm_count, app_files):
   common.helpers.create_pool_if_not_exist(batch_client, pool)
 
 def run_commands(batch_client, block_blob_client, job_id, pool_id):
-  """Submits a job to the Azure Batch service and adds
-  a task that runs a python script.
+  """Run the start commands listed in the file "start_commands" on
+  all the nodes of the Azure Batch service.
 
   :param batch_client: The batch client to use.
   :type batch_client: `batchserviceclient.BatchServiceClient`
@@ -313,8 +301,8 @@ def run_commands(batch_client, block_blob_client, job_id, pool_id):
   logging.info('task created in seconds {}'.format(time.time() - start))
 
 def submit_job_and_add_tasks(batch_client, block_blob_client, job_id, pool_id, in_files, out_container_name, app_files, storage_account_name, out_sas_token):
-  """Submits a job to the Azure Batch service and adds
-  a task that runs a python script.
+  """Submits jobs to the Azure Batch service and adds
+  tasks that runs a python script.
 
   :param batch_client: The batch client to use.
   :type batch_client: `batchserviceclient.BatchServiceClient`
@@ -322,6 +310,12 @@ def submit_job_and_add_tasks(batch_client, block_blob_client, job_id, pool_id, i
   :type block_blob_client: `azure.storage.blob.BlockBlobService`
   :param str job_id: The id of the job to create.
   :param str pool_id: The id of the pool to use.
+  :param list in_files: The list of the file paths of the inputs.
+  :param str out_container_name: The name of the output container.
+  :param list app_files: The list of all the other scripts to upload.
+  :param str storage_account_name: The name of the storage account.
+  :param str out_sas_token: A SAS token granting the specified 
+  permissions to the output container.
   """
   start = time.time()
   job = batchmodels.JobAddParameter(
@@ -335,7 +329,6 @@ def submit_job_and_add_tasks(batch_client, block_blob_client, job_id, pool_id, i
   
   tasks = [batchmodels.TaskAddParameter(
     id="EBOTask-{}".format(i),
-    #$AZ_BATCH_NODE_SHARED_DIR/
     command_line='python {} --filepath {} --storageaccount {} --storagecontainer {} --sastoken "{}"'.format(_TASK_FILE,
              in_file.file_path,
              storage_account_name,
@@ -344,7 +337,6 @@ def submit_job_and_add_tasks(batch_client, block_blob_client, job_id, pool_id, i
     resource_files=[in_file] + app_files) \
     for i, in_file in enumerate(in_files)]
 
-  #batch_client.task.add(job_id=job.id, task=task)
   cnt = 0
   tot_tasks = len(tasks)
   while cnt < tot_tasks:
