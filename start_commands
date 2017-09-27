@@ -1,0 +1,16 @@
+curl -fSsL https://bootstrap.pypa.io/get-pip.py | python
+pip install -U pip setuptools
+pip install -U requests
+pip install -U msrest
+pip install azure-storage==0.32.0
+pip install cython
+export DEBIAN_FRONTEND=noninteractive
+export TERM=linux
+apt-get update
+apt-get -y install git
+apt-get install --fix-missing
+apt-get -y install python-scipy python-numpy python-sklearn
+apt-get -y install build-essential python-dev python-setuptools libatlas-dev libatlas3gf-base
+pip install --user --install-option="--prefix=" -U scikit-learn
+apt-get -y install libsuitesparse-dev
+pip install git+https://github.com/njsmith/scikits-sparse.git

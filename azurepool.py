@@ -305,12 +305,10 @@ def run_commands(batch_client, block_blob_client, job_id, pool_id):
   nodes = list(batch_client.compute_node.list(pool_id))
   tasks = [batchmodels.TaskAddParameter(
     id="EBOTask-{}".format(i),
-    #$AZ_BATCH_NODE_SHARED_DIR/
     command_line=common.helpers.wrap_commands_in_shell('linux', task_commands),
     user_identity=batchmodels.UserIdentity(auto_user=user)) \
     for i in xrange(len(nodes))]
 
-  #batch_client.task.add(job_id=job.id, task=task)
   batch_client.task.add_collection(job.id, tasks)
   logging.info('task created in seconds {}'.format(time.time() - start))
 
