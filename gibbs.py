@@ -42,7 +42,9 @@ class GibbsSampler(object):
 
     self.k = k
     if k is None:
-      lmd = np.random.gamma(self.beta[0], self.beta[1], self.xdim) #* (self.x_range[1]-self.x_range[0])
+      # set the value for lambda
+      lmd = np.random.gamma(self.beta[0], self.beta[1], self.xdim) 
+      
       self.k = np.maximum(np.random.poisson(lmd), 2)
     
     # todo:
@@ -81,7 +83,7 @@ class GibbsSampler(object):
       rnd_stream = np.random,
       bias_term = False
       )
-    #start = time.time()
+
     if self.gp_type == 'sk':
       # densekern > sparsekern \approx sparserp
       sparsekern = SparseKernel(phi, normalize=True)
@@ -90,7 +92,7 @@ class GibbsSampler(object):
       # too slow
       sparsephi = IndexToBinarySparse(phi, normalize=True)
       gp = SparseFeatureGP(self.X, self.y, sigma = 0.1, phi = sparsephi)
-    #print 'in gibbs ', phi.size
+
     elif self.gp_type == 'dk':
       densekern = DenseKernel(phi, normalize=True)
       gp = DenseKernelGP(self.X, self.y, sigma=self.sigma, kern = densekern)
@@ -100,7 +102,6 @@ class GibbsSampler(object):
       gp = DenseFeatureGP(self.X, self.y, sigma=self.sigma, phi = densephi)
     
     gp.fit()
-    #print 'elapsed time ', time.time() - start
     return gp
 
   # idea: can instead get log likelihood on different subset of data for gibbs
@@ -152,7 +153,7 @@ class GibbsSampler(object):
         beta_post = lambda x: comb(self.beta[0]+x-1., x)/((1./self.beta[1]+1.)**x)
         max_log_prob_perturbed = beta_post(kd_old) - self.gp.nll + helper.gumbel()
 
-        # define range for k_d? current k_d \pm 10
+        # range of k_d is kd_old \pm 5
         other_k = np.arange(-5, 5) + kd_old
         other_k = other_k[np.logical_and(other_k >= 2, other_k != kd_old)]
 

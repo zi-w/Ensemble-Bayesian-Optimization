@@ -19,8 +19,6 @@ class bo(object):
       self.opt_n = np.maximum(self.opt_n, self.n_bo*2)
 
     self.max_value = self.options['max_value']
-    if 'ziw' in options:
-      self.max_value = self.options['max_value'] + np.random.normal()*0.05
     self.n_bo_top_percent = self.options['n_bo_top_percent']
   def learn(self):
     self.gp, self.z, self.k = self.solver.run(self.options['gibbs_iter'])

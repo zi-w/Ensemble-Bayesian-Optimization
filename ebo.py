@@ -66,28 +66,18 @@ class ebo(object):
       self.timing.append((self.X.shape[0], elapsed))
       # allocate worker budget
       newX, newacf, z_all, k_all = zip(*res)
-
       # sync hyper parameters
 
-      if len(z_all) == 1:
-        logging.error(z_all)
-        self.z = np.array(z_all[0])
-      for zz in z_all:
-        if zz.size != x_range.shape[1]:
-          print 'zz wrong size?'
-          print zz
-          assert 0 == 1
       if self.options['gibbs_iter'] != 0:
         self.z = helper.mean_z(np.array(z_all), dim_limit)
         self.k = np.mean(k_all, axis=0).astype(int)
-
       # get newX
       newX = np.vstack(newX)
       newacf = np.hstack(newacf)
 
       newX = self.choose_newX(newX, newacf, n_top, B)
 
-      # map again
+      # map again to evaluate the selected inputs
       parameters = [[self.f, n.X, n.y, n.x_range, True, [x], self.options] for x in newX]
 
       newY = self.pool.map(parameters, 'eval' + str(t), not self.options['func_cheap'])
@@ -106,7 +96,7 @@ class ebo(object):
     start = time.time()
     inds = newacf.argsort()
     if 'heuristic' in self.options and self.options['heuristic']:
-      n_top = np.ceil(B/2).astype(int)
+      n_top = np.ceil(B/2.).astype(int)
       inds_of_inds = np.hstack((range(n_top), np.random.permutation(range(n_top,len(inds))))) 
       newX = newX[inds[inds_of_inds[:B]]]
       return newX
@@ -122,8 +112,7 @@ class ebo(object):
     while next_ind < B:
       jnext = maxjbest + n_top
       candidates = all_candidates[:jnext]
-      #print len(candidates), jnext, jbest, len_inds, all_candidates, good_inds
-      #print '======='
+
       assert len(candidates) > 0, 'B > number of selections?'
       maxlogdet = -np.float('inf')
       jbest = -1
@@ -146,9 +135,8 @@ class ebo(object):
       all_candidates = all_candidates[all_candidates != jbest]
       next_ind += 1
       rec.append(marginal)
-    print 'finished choosing newX, ', time.time() - start
-    #assert len(np.unique(good_inds)) == B
-    #print newacf[good_inds],self.compute_marginal_det(curX, newX[inds[jbest]], factor, kern), rec
+    print 'finished choosing newX, eplased time = ', time.time() - start
+
     return newX[good_inds]
 
   def compute_marginal_det(self, X, xx, factor, kern):
@@ -156,8 +144,7 @@ class ebo(object):
 
     det = np.log(kern.xTxNorm - kXn.dot(scipy.linalg.cho_solve((factor, False), kXn.T)).sum())
     return det
-    #inds_of_inds = np.hstack((range(n_top), np.random.permutation(range(n_top,len(inds))))) 
-    #newX = newX[inds[inds_of_inds[:B]]]
+
   def get_best(self):
     cur = self.y.argmax(axis=0)
     self.bestx, self.besty = self.X[cur], self.y[cur]
@@ -176,11 +163,12 @@ class ebo(object):
       return False
     self.X, self.y, self.z, self.k, self.timing = pickle.load(open(fnm))
     print 'Successfully reloaded file.'
+
   # This will save the pool workers
   def pause(self):
     self.pool.delete_containers()
 
-  # Don't call this for our experiments!! It will release all the workers.
+  # end() will release all the workers.
   def end(self):
     self.pool.end()
 
@@ -225,10 +213,10 @@ def check_valid_options(options):
 
   assert options['k'] is None or np.min(options['k']) >= 2, 'number of tiles must be at least 2'
   
-  #assert options['n_top'] < options['B'], 'number of top selections should be fewer than B (total selections)'
 
 
 def plot_ebo(tree, newX, t):
+  # visualize EBO on 2D function
   import matplotlib.pyplot as plt
   import matplotlib.patches as patches
   ax, fig = tree.visualize()
@@ -241,7 +229,7 @@ def plot_ebo(tree, newX, t):
         )
     ax.add_patch(p)
   plt.show()
-  fig.savefig('../paper/figs/' + 'rect' + str(t) +'.eps', format='eps', dpi=1000)
+  fig.savefig('ebo_result_iteration_' + str(t) +'.eps', format='eps', dpi=1000)
 
 
 

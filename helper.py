@@ -3,7 +3,6 @@ import numpy as np
 import scipy.cluster.hierarchy as hi
 
 def sample_multinomial(prob, shape, dim_limit):
-  #return cat.Categorical(prob).sample(np.array(shape))
   assert isinstance(shape, int)
   prob = prob / np.sum(prob)
   ret = - np.ones(shape, dtype=np.int)
@@ -20,7 +19,6 @@ def sample_multinomial(prob, shape, dim_limit):
   return ret
 
 def sample_categorical(prob):
-  #return cat.Categorical(prob).sample(np.array(shape))
   prob = prob / np.sum(prob)
   return np.random.choice(len(prob), p=prob)
 

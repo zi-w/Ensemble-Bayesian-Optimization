@@ -14,7 +14,7 @@ class MondrianNode(object):
     self.left = None
     self.right = None
     self.epsilon = 0. # overlap of the leaves
-    #mindata = 100
+
     self.maxdata = 1
   def get_vol(self):
     if self.reference is not None:
@@ -99,16 +99,16 @@ class MondrianTree(object):
     mondrian_colors = mondrian_colors/255.0
     fig = plt.figure()
     ax = fig.add_subplot(111, aspect='equal')
-
+    print('number of leaves = {}'.format(len(self.leaves)))
     for node in self.leaves:
-      print node.x_range
       xy = node.x_range[0]
       xylen = node.x_range[1] - node.x_range[0]
       c = mondrian_colors[4]
       p = patches.Rectangle(
           xy, xylen[0], xylen[1],
           facecolor= c,
-          linewidth=5
+          linewidth=1,
+          edgecolor='k'
           )
       ax.add_patch(p)
     for x in self.X:

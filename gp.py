@@ -1,7 +1,7 @@
 import scipy.linalg
 import numpy as np
 import scipy.sparse
-import sksparse.cholmod as spch
+#import sksparse.cholmod as spch
 class SparseFeatureGP:
   def __init__(self, X, y, sigma, phi):
     self.X = X

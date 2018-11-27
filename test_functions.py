@@ -40,9 +40,10 @@ class sampled_gp_func(object):
       active = self.z==a
       k1 = DenseL1Kernel(self.z[active], self.k[active])
       af = lambda x: np.array(k1(x, self.gp.X[:,active])).dot(self.gp.alpha)
-      x[active] = global_minimize(af, self.x_range[:,active], 10000)
+      x[active] = np.squeeze(global_minimize(af, self.x_range[:,active], 10000))
+      
     self.argmax = x
-    self.fmax = -np.squeeze(np.array(self.gp.kern(x, self.gp.X)).dot(self.gp.alpha))
+    self.fmax = -np.squeeze(np.array(self.gp.kern(x, self.gp.X)).dot(self.gp.alpha)) 
 
   def __call__(self, x):
     if x.ndim == 1:
@@ -87,6 +88,7 @@ def save_sampled_gp_funcs(dx, n=50, nfunc=1, isplot=1, dirnm='mytests'):
   return f
 
 def plot_f(f, filenm = 'test_function.eps'):
+  # only for 2D functions
   import matplotlib.pyplot as plt
   import matplotlib
   font = {'size': 20}

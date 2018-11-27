@@ -208,7 +208,6 @@ class AzurePool(object):
 
 
 def upload_files(block_blob_client, container_name, files):
-  #block_blob_client.create_container(container_name, fail_on_exist=False)
   return [get_resource_file(block_blob_client, container_name, \
     file_path, os.path.realpath(file_path)) for file_path in files]
   
@@ -224,6 +223,12 @@ def get_resource_file(block_blob_client, container_name, blob_name, file_path):
   return batchmodels.ResourceFile(file_path=blob_name,
     blob_source=sas_url)
 def get_list_from_file(file_nm):
+  """
+  Obtains the list of lines from a file.
+  :param str file_nm: The name of the file.
+  :rtype: list
+  :return: A list of the striped lines.
+  """
   with open(file_nm) as f:
     content = f.readlines()
   return [x.strip() for x in content]
