@@ -1,7 +1,7 @@
 import numpy as np
-from representation import DenseL1Kernel
-from gp import DenseKernelGP
-from bo import global_minimize
+from gp_tools.representation import DenseL1Kernel
+from gp_tools.gp import DenseKernelGP
+from ebo_core.bo import global_minimize
 import os 
 
 class simple_quadratic(object):
@@ -43,7 +43,7 @@ class sampled_gp_func(object):
       x[active] = np.squeeze(global_minimize(af, self.x_range[:,active], 10000))
       
     self.argmax = x
-    self.fmax = -np.squeeze(np.array(self.gp.kern(x, self.gp.X)).dot(self.gp.alpha)) 
+    self.f_max = -np.squeeze(np.array(self.gp.kern(x, self.gp.X)).dot(self.gp.alpha))
 
   def __call__(self, x):
     if x.ndim == 1:

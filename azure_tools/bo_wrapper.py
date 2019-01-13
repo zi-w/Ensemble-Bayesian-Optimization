@@ -8,7 +8,7 @@ try:
 except:
    import pickle
 
-from bo import bo
+from ebo_core.bo import bo
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()

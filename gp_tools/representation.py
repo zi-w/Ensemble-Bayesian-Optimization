@@ -1,6 +1,7 @@
+from itertools import chain, izip
+
 import numpy as np
 from scipy.sparse import csr_matrix
-from itertools import chain, izip
 
 """
 authors: Clement Gehring
@@ -11,6 +12,8 @@ date: May 2015
 ################## VARIOUS INTERFACES #######################################
 """ Generic map from a state (as an array), to a feature vector (as an array)
 """
+
+
 class Projector(object):
     def __init__(self):
         pass
@@ -18,6 +21,7 @@ class Projector(object):
     """ Project a vector (or matrix of row vectors) to a corresponding
         feature vector. It should handle 1-D arrays and 2-D arrays.
     """
+
     def __call__(self, state):
         raise NotImplementedError("Subclasses should implement this!")
 
@@ -25,9 +29,12 @@ class Projector(object):
     def size(self):
         raise NotImplementedError("Subclasses should implement this!")
 
+
 """ Generic map from a state-action pair (as two arrays), to a feature
     vector (as an array)
 """
+
+
 class StateActionProjector(object):
     def __init__(self):
         pass
@@ -37,6 +44,7 @@ class StateActionProjector(object):
         arguments and any combination of these cases, i.e., one state but
         several actions and vice-versa.
     """
+
     def __call__(self, state, action):
         raise NotImplementedError("Subclasses should implement this!")
 
@@ -44,9 +52,12 @@ class StateActionProjector(object):
     def size(self):
         raise NotImplementedError("Subclasses should implement this!")
 
+
 """ Hashing an array of indices to a single index.
     Mostly used for tile coding.
 """
+
+
 class Hashing(object):
     def __init__(self, **kargs):
         pass
@@ -58,8 +69,10 @@ class Hashing(object):
 
         Must be able to deal with 2D arrays of indices.
     """
+
     def __call__(self, indices):
         raise NotImplementedError("Subclasses should implement this!")
+
 
 ################## HELPER CLASSES FOR STATE PROJECTOR TO #####################
 ################## STATE-ACTION PROJECTOR CONVERSION     #####################
@@ -68,25 +81,30 @@ class Hashing(object):
     number of rows (for when only one row was given for one argument but not
     the other).
 """
+
+
 def tile_and_adjust_state_action(state, action):
     # make everything 2-D
     if state.ndim == 1:
-        state = state.reshape((1,-1))
+        state = state.reshape((1, -1))
     if action.ndim == 1:
-        action = action.reshape((1,-1))
+        action = action.reshape((1, -1))
 
     # if one is 2D and but not the other, tile such that the dimensions
     # match.
-    if state.shape[0] == 1 and action.shape[0]> 1:
+    if state.shape[0] == 1 and action.shape[0] > 1:
         state = np.tile(state, (action.shape[0], 1))
-    elif action.shape[0] == 1 and state.shape[0]> 1:
+    elif action.shape[0] == 1 and state.shape[0] > 1:
         action = np.tile(action, (state.shape[0], 1))
 
     return state, action
 
+
 """ Simple state-action projector that simply treats the actions as
     extra dimensions and feeds it to a projector.
 """
+
+
 class ConcatStateAction(StateActionProjector):
     def __init__(self, projector):
         self.projector = projector
@@ -101,9 +119,12 @@ class ConcatStateAction(StateActionProjector):
     def size(self):
         return self.projector.size
 
+
 """ Simple state-action projector that simply ignores the action. Mainly
     to be used when only a value function is needed.
 """
+
+
 class RemoveAction(StateActionProjector):
     def __init__(self, projector):
         self.projector = projector
@@ -116,6 +137,7 @@ class RemoveAction(StateActionProjector):
     def size(self):
         return self.projector.size
 
+
 """ Create a tabular actions representaton with a state projector. The output
     vectors are padded with zeros such that the total dimension is
     n*num_actions, where n is the output dimension of the projector.
@@ -126,8 +148,10 @@ class RemoveAction(StateActionProjector):
     The resulting output can be either dense or sparse.
 
 """
+
+
 class TabularAction(StateActionProjector):
-    def __init__(self, projector, num_actions, sparse = True):
+    def __init__(self, projector, num_actions, sparse=True):
         self.phi = projector
         self.__size = self.phi.size * num_actions
         self.num_actions = num_actions
@@ -143,9 +167,9 @@ class TabularAction(StateActionProjector):
         action = np.tile(action, (1, phi_s.indptr[1] - phi_s.indptr[0])).reshape(-1).astype('int')
 
         phi_sa = csr_matrix((phi_s.data,
-                             phi_s.indices + action*self.phi.size,
+                             phi_s.indices + action * self.phi.size,
                              phi_s.indptr),
-                            shape = (phi_s.shape[0], self.size))
+                            shape=(phi_s.shape[0], self.size))
         if not self.sparse:
             phi_sa = phi_sa.toarray()
         return phi_sa
@@ -160,21 +184,23 @@ class TabularAction(StateActionProjector):
 """ Projector converting a projector, which generate indices, to a
     projector generating sparse vectors (as a csr matrix)
 """
-class IndexToBinarySparse(Projector):
 
+
+class IndexToBinarySparse(Projector):
     """ Constructor to go from a projector generating indices to a
         projector generating sparse vectors (as a csr matrix)
 
         index_projector:    the projector generating indices, it needs to be
                             be able to handle 2-D arrays
     """
-    def __init__(self, index_projector, normalize = False):
+
+    def __init__(self, index_projector, normalize=False):
         super(IndexToBinarySparse, self).__init__()
 
         self.index_projector = index_projector
         self.normalize = normalize
         if normalize:
-            self.entry_value = 1.0/np.sqrt(self.index_projector.nonzeros)
+            self.entry_value = 1.0 / np.sqrt(self.index_projector.nonzeros)
         else:
             self.entry_value = 1.0
 
@@ -182,7 +208,7 @@ class IndexToBinarySparse(Projector):
         # generate indices for a single (or several) binary sparse vector(s).
         indices = self.index_projector(state)
         if indices.ndim == 1:
-            indices = indices.reshape((1,-1))
+            indices = indices.reshape((1, -1))
 
         # set value of all active features
         vals = np.empty(indices.size)
@@ -190,13 +216,14 @@ class IndexToBinarySparse(Projector):
 
         # create row pointers, this assumes each row has the same number
         # of non-zero entries
-        row_ptr = np.arange(0, indices.size+1, indices.shape[1])
+        row_ptr = np.arange(0, indices.size + 1, indices.shape[1])
 
         # flatten the column indices generate ealier
         col_ind = indices.flatten()
 
         return csr_matrix((vals, col_ind, row_ptr),
-                          shape = (indices.shape[0], self.index_projector.size))
+                          shape=(indices.shape[0], self.index_projector.size))
+
     @property
     def size(self):
         return self.index_projector.size
@@ -205,24 +232,27 @@ class IndexToBinarySparse(Projector):
     def xTxNorm(self):
         return 1.0 if self.normalize else self.index_projector.nonzeros
 
+
 """ Projector converting a projector, which generate indices, to a
     projector generating dense vectors (as an array)
 """
-class IndexToDense(Projector):
 
+
+class IndexToDense(Projector):
     """ Constructor to go from a projector generating indices to a
         projector generating dense vectors (as an array)
 
         index_projector:    the projector generating indices, it needs to be
                             be able to handle 2-D arrays
     """
-    def __init__(self, index_projector, normalize = False):
+
+    def __init__(self, index_projector, normalize=False):
         super(IndexToDense, self).__init__()
 
         self.index_projector = index_projector
         self.normalize = normalize
         if normalize:
-            self.entry_value = 1.0/np.sqrt(self.index_projector.nonzeros)
+            self.entry_value = 1.0 / np.sqrt(self.index_projector.nonzeros)
         else:
             self.entry_value = 1.0
 
@@ -230,13 +260,13 @@ class IndexToDense(Projector):
         # generate indices for a single (or several) binary vectors
         indices = self.index_projector(state)
         if indices.ndim == 1:
-            indices = indices.reshape((1,-1))
+            indices = indices.reshape((1, -1))
 
         # allocate dense array
         output = np.zeros((indices.shape[0], self.size))
 
         # create row indices
-        row_ind = np.tile(np.arange(indices.shape[0]).reshape((-1,1)),
+        row_ind = np.tile(np.arange(indices.shape[0]).reshape((-1, 1)),
                           (1, indices.shape[1])).flatten()
 
         # set values for all active features
@@ -245,7 +275,6 @@ class IndexToDense(Projector):
         # squeeze out useless dimensions, if any
         return output.squeeze()
 
-
     @property
     def size(self):
         return self.index_projector.size
@@ -254,9 +283,12 @@ class IndexToDense(Projector):
     def xTxNorm(self):
         return 1.0 if self.normalize else self.index_projector.nonzeros
 
+
 """ Projector concatenating several projectors into the same representation
     by concatenating their outputs.
 """
+
+
 class ConcatProjector(Projector):
     def __init__(self, projectors):
         super(ConcatProjector, self).__init__()
@@ -269,9 +301,10 @@ class ConcatProjector(Projector):
     def size(self):
         return sum([phi.size for phi in self.phis])
 
+
 class SparseRPTilecoding(IndexToBinarySparse):
-    def __init__(self, index_projector, random_proj, normalize = False, output_dense = True):
-        super(SparseRPTilecoding, self).__init__(index_projector, normalize = normalize)
+    def __init__(self, index_projector, random_proj, normalize=False, output_dense=True):
+        super(SparseRPTilecoding, self).__init__(index_projector, normalize=normalize)
         self.random_proj = random_proj
         self.output_dense = output_dense
 
@@ -297,13 +330,15 @@ class DenseKernel(IndexToBinarySparse):
             phi2 = super(self.__class__, self).__call__(X2)
             return phi1.dot(phi2.T).todense()
 
+
 class DenseL1Kernel(object):
     def __init__(self, z, k, scale=1.0):
         self.z = z.copy()
         self.all_cat = np.unique(self.z)
         self.n_cat = self.all_cat.shape[0]
-        self.k = k*1.0
-        self.scale = scale*1.0
+        self.k = k * 1.0
+        self.scale = scale * 1.0
+
     def __call__(self, X1, X2=None):
         if X2 is None:
             if X1.ndim == 1:
@@ -311,39 +346,43 @@ class DenseL1Kernel(object):
             K = 0
             for a in self.all_cat:
                 active = self.z == a
-                K += computeKmm(X1[:,active], self.k[active], self.scale/self.n_cat)
+                K += computeKmm(X1[:, active], self.k[active], self.scale / self.n_cat)
             return K
         else:
-            X1 = X1[None,:] if X1.ndim == 1 else X1
-            X2 = X2[None,:] if X2.ndim == 1 else X2
+            X1 = X1[None, :] if X1.ndim == 1 else X1
+            X2 = X2[None, :] if X2.ndim == 1 else X2
             K = 0
             for a in self.all_cat:
                 active = self.z == a
-                K += computeKnm(X1[:,active], X2[:,active], self.k[active], self.scale/self.n_cat)
+                K += computeKnm(X1[:, active], X2[:, active], self.k[active], self.scale / self.n_cat)
             return K
 
     @property
     def xTxNorm(self):
         return self.scale
 
+
 # L1 kernel helpers:
 def computeKmm(Xbar, k, scale):
     Xbar = Xbar * k
-    Qbar = (Xbar**2).sum(axis=1)[:,None]
-    l2dist = Qbar + Qbar.T - 2*(Xbar.dot(Xbar.T))
+    Qbar = (Xbar ** 2).sum(axis=1)[:, None]
+    l2dist = Qbar + Qbar.T - 2 * (Xbar.dot(Xbar.T))
     l2dist[l2dist < 0] = 0
-    ret = scale*np.exp(-np.sqrt(l2dist))
+    ret = scale * np.exp(-np.sqrt(l2dist))
     return ret
+
+
 def computeKnm(X, Xbar, k, scale):
     X = X * k
     Xbar = Xbar * k
-    Q = (X**2).sum(axis=1)[:,None]
-    Qbar = (Xbar**2).sum(axis=1)[:,None]
-    l2dist = Q + Qbar.T - 2*(X.dot(Xbar.T))
+    Q = (X ** 2).sum(axis=1)[:, None]
+    Qbar = (Xbar ** 2).sum(axis=1)[:, None]
+    l2dist = Q + Qbar.T - 2 * (X.dot(Xbar.T))
     l2dist[l2dist < 0] = 0
-    
-    ret = scale*np.exp(-np.sqrt(l2dist))
+
+    ret = scale * np.exp(-np.sqrt(l2dist))
     return ret
+
 
 class SparseKernel(IndexToBinarySparse):
     def __call__(self, X1, X2=None):
@@ -354,13 +393,15 @@ class SparseKernel(IndexToBinarySparse):
             phi2 = super(self.__class__, self).__call__(X2)
             return phi1.dot(phi2.T)
 
+
 ################## TILE CODING IMPLEMENTATION ################################
 
 """ Represents a series of layer of tile coding. This is equivalent to a single
     discretization of the input space.
 """
-class Tiling(object):
 
+
+class Tiling(object):
     """ Constructor for a set of tilings.
 
         input_index: array (or list) of the input indices to be considered. This allows
@@ -392,70 +433,71 @@ class Tiling(object):
                     this could map could be defined by a random hash funciton
                     (e.g., UNH).
     """
+
     def __init__(self,
                  input_index,
                  ntiles,
                  ntilings,
                  state_range,
                  rnd_stream,
-                 offset = None,
-                 hashing = None):
+                 offset=None,
+                 hashing=None):
 
         self.hashing = hashing
 
         if isinstance(ntiles, int):
-            ntiles = np.array([ntiles]*len(input_index), dtype='int')
+            ntiles = np.array([ntiles] * len(input_index), dtype='int')
         else:
             ntiles = np.array(ntiles)
 
-        self.state_range = [state_range[0][input_index].copy().astype(float)[None,:,None], 
-                state_range[1][input_index].copy().astype(float)[None,:,None]]
+        self.state_range = [state_range[0][input_index].copy().astype(float)[None, :, None],
+                            state_range[1][input_index].copy().astype(float)[None, :, None]]
 
         if ntiles.ndim > 1:
-            ntiles = ntiles[None,:,:]
+            ntiles = ntiles[None, :, :]
         else:
-            ntiles = ntiles[None,:,None]
+            ntiles = ntiles[None, :, None]
 
-        self.state_range[0] = self.state_range[0] - (self.state_range[1]-self.state_range[0])/(ntiles-1)
+        self.state_range[0] = self.state_range[0] - (self.state_range[1] - self.state_range[0]) / (ntiles - 1)
 
         self.offset = offset
         if offset is None:
             self.offset = np.empty((ntiles.shape[1], ntilings))
             for i in xrange(ntiles.shape[0]):
-                self.offset[i,:] = -rnd_stream.random_sample(ntilings)/ntiles[0,i]
+                self.offset[i, :] = -rnd_stream.random_sample(ntilings) / ntiles[0, i]
 
         if self.hashing == None:
             self.hashing = IdentityHash(ntiles)
 
         self.input_index = np.array(input_index, dtype='int')
-        self.size = ntilings*(self.hashing.memory)
+        self.size = ntilings * (self.hashing.memory)
         self.index_offset = (self.hashing.memory * np.arange(ntilings)).astype('int')
         self.ntiles = ntiles
-
 
     def __call__(self, state):
         return self.getIndices(state)
 
     def getIndices(self, state):
         if state.ndim == 1:
-            state = state.reshape((1,-1))[:,:,None]
+            state = state.reshape((1, -1))[:, :, None]
         else:
-            state = state[:,:,None]
+            state = state[:, :, None]
 
-        nstate = (state[:, self.input_index, :] - self.state_range[0])/(self.state_range[1]-self.state_range[0])
-        indicies =((self.offset[None,:,:] + nstate)*self.ntiles).astype(np.int)
-        return self.hashing(indicies) + self.index_offset[None,:]
+        nstate = (state[:, self.input_index, :] - self.state_range[0]) / (self.state_range[1] - self.state_range[0])
+        indicies = ((self.offset[None, :, :] + nstate) * self.ntiles).astype(np.int)
+        return self.hashing(indicies) + self.index_offset[None, :]
 
     @property
     def ntilings(self):
         return self.offset.shape[1]
-    
+
 
 """ Full tile coding implementation. This represents a projector, from states
     to features.
 """
-class TileCoding(Projector):
 
+
+class TileCoding(Projector):
     """ Constructor for a tile coding projector. The constructor builds
         several sets of individual tilings based on the input arguments.
 
@@ -512,57 +554,60 @@ class TileCoding(Projector):
 
 
     """
+
     def __init__(self,
                  input_indices,
                  ntiles,
                  ntilings,
                  hashing,
                  state_range,
-                 rnd_stream = None,
-                 offsets = None,
-                 bias_term = True):
+                 rnd_stream=None,
+                 offsets=None,
+                 bias_term=True):
         super(TileCoding, self).__init__()
         if hashing == None:
-            hashing = [None]*len(ntilings)
+            hashing = [None] * len(ntilings)
         if offsets is None:
             offsets = [None] * len(input_indices)
 
         if offsets is None and rnd_stream is None:
-            raise Exception('Either offsets for each tiling or a random stream (numpy) needs to be given in the constructor')
+            raise Exception(
+                'Either offsets for each tiling or a random stream (numpy) needs to be given in the constructor')
 
         self.state_range = np.array(state_range)
-        self.tilings = [Tiling(in_index, nt, t, self.state_range, rnd_stream, offset=o, hashing = h)
+        self.tilings = [Tiling(in_index, nt, t, self.state_range, rnd_stream, offset=o, hashing=h)
                         for in_index, nt, t, h, o
                         in zip(input_indices, ntiles, ntilings, hashing, offsets)]
         self.__size = sum(map(lambda x: x.size, self.tilings))
         self.bias_term = bias_term
-        self.index_offset = np.zeros(len(ntilings), dtype = 'int')
+        self.index_offset = np.zeros(len(ntilings), dtype='int')
         self.index_offset[1:] = np.cumsum(map(lambda x: x.size, self.tilings[:-1]))
-        self.index_offset = np.hstack( [np.array([off]*t, dtype='int')
-                                            for off, t in zip(self.index_offset, ntilings)])
+        self.index_offset = np.hstack([np.array([off] * t, dtype='int')
+                                       for off, t in zip(self.index_offset, ntilings)])
 
         if bias_term:
             self.index_offset = np.hstack((self.index_offset, np.array(self.__size, dtype='int')))
             self.__size += 1
 
-        self.__size  = int(self.__size)
+        self.__size = int(self.__size)
 
     """ Map a state vector, or several state vectors, to its corresponding
         tile indices.
     """
+
     def __call__(self, state):
         if state.ndim == 1:
-            state = state.reshape((1,-1))
+            state = state.reshape((1, -1))
 
         # add bias term if needed, concatenate set of indices of all
         # the sets of tilings.
         if self.bias_term:
             indices = np.hstack(chain((t(state) for t in self.tilings),
                                       [np.zeros((state.shape[0], 1), dtype='int')])) \
-                            + self.index_offset
+                      + self.index_offset
         else:
             indices = np.hstack((t(state) for t in self.tilings)) \
-                            + self.index_offset
+                      + self.index_offset
 
         return indices.squeeze()
 
@@ -573,46 +618,48 @@ class TileCoding(Projector):
     @property
     def nonzeros(self):
         return np.sum([t.ntilings for t in self.tilings]) + (1 if self.bias_term else 0)
-    
 
 
 class UNH(Hashing):
     # constants were taken from rlpark's implementation.
     increment = 470
+
     def __init__(self, memory, rnd_stream):
         super(UNH, self).__init__()
         self.rndseq = np.zeros(16384, dtype='int')
         self.memory = int(memory)
         for i in range(4):
             self.rndseq = self.rndseq << 8 | rnd_stream.random_integers(np.iinfo('int16').min,
-                                                                       np.iinfo('int16').max,
-                                                                       16384) & 0xff
+                                                                        np.iinfo('int16').max,
+                                                                        16384) & 0xff
+
     def __call__(self, indices):
         rnd_seq = self.rndseq
-        a = self.increment*np.arange(indices.shape[1])
-        index = indices + a[None,:,None]
-        index = index - (index.astype(np.int)/rnd_seq.size)*rnd_seq.size
+        a = self.increment * np.arange(indices.shape[1])
+        index = indices + a[None, :, None]
+        index = index - (index.astype(np.int) / rnd_seq.size) * rnd_seq.size
         hashed_index = (np.sum(rnd_seq[index], axis=1)).astype(np.int)
-        return (hashed_index - (hashed_index/self.memory).astype(np.int)*self.memory).astype('int')
+        return (hashed_index - (hashed_index / self.memory).astype(np.int) * self.memory).astype('int')
+
 
 class IdentityHash(Hashing):
-    def __init__(self, dims, wrap = False):
+    def __init__(self, dims, wrap=False):
         super(IdentityHash, self).__init__()
         self.memory = np.prod(dims)
         self.dims = dims.astype('int')
         self.wrap = wrap
-        self.dim_offset = np.cumprod(np.vstack((np.ones((self.dims.shape[2],1)), self.dims[0,:0:-1,:])), 
-                                axis = 0).astype('int')[None,::-1,:]
+        self.dim_offset = np.cumprod(np.vstack((np.ones((self.dims.shape[2], 1)), self.dims[0, :0:-1, :])),
+                                     axis=0).astype('int')[None, ::-1, :]
 
     def __call__(self, indices):
         if self.wrap:
             indices = np.remainder(indices, self.dims)
         else:
-            indices = np.clip(indices, 0, self.dims-1)
-        return np.sum(indices*self.dim_offset, axis=1)
+            indices = np.clip(indices, 0, self.dims - 1)
+        return np.sum(indices * self.dim_offset, axis=1)
+
 
 ################## END OF TILE CODING IMPLEMENTATION #########################
-
 
 
 ################## RBF IMPLEMENTATION ########################################
@@ -635,22 +682,23 @@ class RBFCoding(Projector):
         bias_term:  Boolean to decided whether the output should be augmented
                     with a constant 1.0 bias term.
     """
+
     def __init__(self,
                  widths,
                  centers,
-                 normalized = False,
-                 bias_term = True,
+                 normalized=False,
+                 bias_term=True,
                  **params):
         super(RBFCoding, self).__init__()
 
         # the centers of the rbfs
-        self.c = centers.T[None,:,:]
+        self.c = centers.T[None, :, :]
 
         # the widths of the rbfs, each rbf can have different widths
         if widths.ndim == 1:
-            self.w = widths[None,:,None]
+            self.w = widths[None, :, None]
         else:
-            self.w = widths.T[None,:,:]
+            self.w = widths.T[None, :, :]
 
         # should the output of the rbfs sum to one
         self.normalized = normalized
@@ -668,24 +716,24 @@ class RBFCoding(Projector):
     def __call__(self, state):
         # if only on 1-D array given, reshape to a compatible shape
         if state.ndim == 1:
-            state = state.reshape((1,-1))
+            state = state.reshape((1, -1))
 
         # allocate and set bias term if needed
         last_index = self.size
         output = np.empty((state.shape[0], self.size))
         if self.bias_term:
             last_index -= 1
-            output[:,-1] = 1.0
+            output[:, -1] = 1.0
 
         # compute squared weighted distance distance
-        dsqr = -(((state[:,:,None] - self.c)/self.w)**2).sum(axis=1)
+        dsqr = -(((state[:, :, None] - self.c) / self.w) ** 2).sum(axis=1)
         if self.normalized:
             # compute the normalized rbfs from the distances
-            e_x = np.exp(dsqr - dsqr.min(axis=1)[:,None])
-            output[:,:last_index] = e_x/ e_x.sum(axis=1)[:,None]
+            e_x = np.exp(dsqr - dsqr.min(axis=1)[:, None])
+            output[:, :last_index] = e_x / e_x.sum(axis=1)[:, None]
         else:
             # compute the rbfs from the distances
-            output[:,:last_index] = np.exp(dsqr)
+            output[:, :last_index] = np.exp(dsqr)
 
         # return encoded input, squeeze out extra dimensions (in the case
         # only on input row was given)
@@ -705,18 +753,18 @@ class RBFCoding(Projector):
                     dimensions. If a single integer is given, all dimensions
                     will have the same number of points.
 """
+
+
 def grid_of_points(state_range, num_centers):
     if isinstance(num_centers, int):
         num_centers = [num_centers] * state_range[0].shape[0]
-    points = [ np.linspace(start, stop, num, endpoint = True)
-                    for start, stop, num in izip(state_range[0],
-                                                 state_range[1],
-                                                 num_centers)]
+    points = [np.linspace(start, stop, num, endpoint=True)
+              for start, stop, num in izip(state_range[0],
+                                           state_range[1],
+                                           num_centers)]
 
     points = np.meshgrid(*points)
-    points = np.concatenate([ p.reshape((-1,1)) for p in points], axis=1)
+    points = np.concatenate([p.reshape((-1, 1)) for p in points], axis=1)
     return points
-
-
 
 ################## END OF RBF IMPLEMENTATION ##################################

@@ -1,6 +1,6 @@
 import numpy as np
-from ebo import ebo
-from test_functions import plot_f, sampled_gp_func, sample_z
+from ebo_core.ebo import ebo
+from test_functions.simple_functions import plot_f, sampled_gp_func, sample_z
 import time
 import logging
 logging.basicConfig(filename='example.log',level=logging.DEBUG)
@@ -19,7 +19,7 @@ plot_f(f)
 # run ebo
 options = {'x_range':x_range, # input domain
            'dx':x_range.shape[1], # input dimension
-           'max_value':f.fmax + sigma*5, # target value 
+           'max_value':f.f_max + sigma*5, # target value
            'T':10, # number of iterations
            'B':10, # number of candidates to be evaluated
            'dim_limit':3, # max dimension of the input for each additive function component
