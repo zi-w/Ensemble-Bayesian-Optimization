@@ -1,13 +1,17 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import time
 
-import helper
+from . import helper
 import numpy as np
-from mondrian import MondrianTree
-from mypool import MyPool
+from .mondrian import MondrianTree
+from .mypool import MyPool
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except:
     import pickle
 from gp_tools.representation import DenseL1Kernel
@@ -50,8 +54,8 @@ class ebo(object):
 
     def run(self):
         x_range, T, B, dim_limit, min_leaf_size, max_n_leaves, n_bo, n_top = self.get_params()
-        tstart = self.X.shape[0] / B
-        for t in xrange(tstart, T):
+        tstart = self.X.shape[0] // B
+        for t in range(tstart, T):
             # search space partition
             ref = self.y.min() if self.y.shape[0] > 0 else None
             self.tree = MondrianTree(self.X, self.y, x_range, max_n_leaves, reference=ref)
@@ -71,7 +75,7 @@ class ebo(object):
 
             self.timing.append((self.X.shape[0], elapsed))
             # allocate worker budget
-            newX, newacf, z_all, k_all = zip(*res)
+            newX, newacf, z_all, k_all = list(zip(*res))
             # sync hyper parameters
 
             if self.options['gibbs_iter'] != 0:
@@ -99,13 +103,13 @@ class ebo(object):
         self.pause()
 
     def choose_newX(self, newX, newacf, n_top, B):
-        print
+        print()
         'start choosing newX'
         start = time.time()
         inds = newacf.argsort()
         if 'heuristic' in self.options and self.options['heuristic']:
             n_top = np.ceil(B / 2.).astype(int)
-            inds_of_inds = np.hstack((range(n_top), np.random.permutation(range(n_top, len(inds)))))
+            inds_of_inds = np.hstack((list(range(n_top)), np.random.permutation(list(range(n_top, len(inds))))))
             newX = newX[inds[inds_of_inds[:B]]]
             return newX
 
@@ -143,7 +147,7 @@ class ebo(object):
             all_candidates = all_candidates[all_candidates != jbest]
             next_ind += 1
             rec.append(marginal)
-        print
+        print()
         'finished choosing newX, eplased time = ', time.time() - start
 
         return newX[good_inds]
@@ -163,9 +167,9 @@ class ebo(object):
         if self.options['isplot']:
             plot_ebo(self.tree, newX, t)
         _, besty, cur = self.get_best()
-        print
+        print()
         't=', t, ', bestid=', cur, ', besty=', besty
-        print
+        print()
         'final z=', self.z, ' final k=', self.k
 
     def reload(self):
@@ -173,7 +177,7 @@ class ebo(object):
         if not os.path.isfile(fnm):
             return False
         self.X, self.y, self.z, self.k, self.timing = pickle.load(open(fnm))
-        print
+        print()
         'Successfully reloaded file.'
 
     # This will save the pool workers
@@ -191,7 +195,7 @@ class ebo(object):
         if not os.path.exists(dirnm):
             os.makedirs(dirnm)
         pickle.dump([self.X, self.y, self.z, self.k, self.timing], open(fnm, 'wb'))
-        print
+        print()
         'saving file... ', time.time() - start, ' seconds'
 
 

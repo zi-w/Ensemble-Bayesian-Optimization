@@ -1,9 +1,16 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 import scipy.linalg
 import scipy.sparse
 
+try:
+    import sksparse.cholmod as spch
+except ImportError:
+    pass
 
-# import sksparse.cholmod as spch
 class SparseFeatureGP:
     def __init__(self, X, y, sigma, phi):
         self.X = X

@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 from ebo_core.ebo import ebo
 from test_functions.simple_functions import plot_f, SampledGpFunc, sample_z
@@ -23,10 +27,10 @@ options = {'x_range':x_range, # input domain
            'T':10, # number of iterations
            'B':10, # number of candidates to be evaluated
            'dim_limit':3, # max dimension of the input for each additive function component
-           'isplot':1, # 1 if plotting the result; otherwise 0. 
+           'isplot':1, # 1 if plotting the result; otherwise 0.
            'z':None, 'k':None, # group assignment and number of cuts in the Gibbs sampling subroutine
            'alpha':1., # hyperparameter of the Gibbs sampling subroutine
-           'beta':np.array([5.,2.]), 
+           'beta':np.array([5.,2.]),
            'opt_n':1000, # points randomly sampled to start continuous optimization of acfun
            'pid':'test3', # process ID for Azure
            'datadir':'tmp_data/', # temporary data directory for Azure
@@ -50,5 +54,5 @@ e = ebo(f, options)
 start = time.time()
 e.run()
 
-print "elapsed time: ", time.time() - start
+print("elapsed time: ", time.time() - start)
 

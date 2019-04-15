@@ -1,9 +1,9 @@
-from __future__ import print_function
+
 
 try:
     import configparser
 except ImportError:
-    import ConfigParser as configparser
+    import configparser as configparser
 import datetime
 import os
 
@@ -12,11 +12,11 @@ import azure.batch.batch_service_client as batch
 import azure.batch.batch_auth as batchauth
 import azure.batch.models as batchmodels
 
-import common.helpers
+from . import common.helpers
 import time
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except:
     import pickle
 import sys
@@ -168,7 +168,7 @@ class AzurePool(object):
         job_id = common.helpers.generate_unique_resource_name(
             job_id)
         common.helpers.delete_blobs_from_container(block_blob_client, self.out)
-        input_file_names = [os.path.join(self.data_dir, str(i) + '.pk') for i in xrange(len(parameters))]
+        input_file_names = [os.path.join(self.data_dir, str(i) + '.pk') for i in range(len(parameters))]
         for i, p in enumerate(parameters):
             pickle.dump(p, open(input_file_names[i], 'wb'))
         # input_file_names = [os.path.realpath(fn) for fn in input_file_names]
@@ -194,7 +194,7 @@ class AzurePool(object):
 
         # print(os.path.join(self.data_dir, str(0) + '_out.pk'))
         ret = []
-        for i in xrange(len(parameters)):
+        for i in range(len(parameters)):
             fnm = os.path.join(self.data_dir, str(i) + '_out.pk')
             if os.path.isfile(fnm):
                 ret.append(pickle.load(open(fnm)))
@@ -312,7 +312,7 @@ def run_commands(batch_client, block_blob_client, job_id, pool_id):
         id="EBOTask-{}".format(i),
         command_line=common.helpers.wrap_commands_in_shell('linux', task_commands),
         user_identity=batchmodels.UserIdentity(auto_user=user)) \
-        for i in xrange(len(nodes))]
+        for i in range(len(nodes))]
 
     batch_client.task.add_collection(job.id, tasks)
     logging.info('task created in seconds {}'.format(time.time() - start))

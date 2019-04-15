@@ -1,4 +1,8 @@
-from push_utils import b2WorldInterface, make_base, create_body, end_effector, run_simulation
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from .push_utils import b2WorldInterface, make_base, create_body, end_effector, run_simulation
 
 import numpy as np
 
@@ -26,7 +30,7 @@ class PushReward:
     def dx(self):
         # dimension of the input
         return self._dx
-    
+
     def __call__(self, argv):
         # returns the reward of pushing two objects with two robots
         rx = float(argv[0])
@@ -43,7 +47,7 @@ class PushReward:
         init_angle2 = float(argv[11])
         rtor = float(argv[12])
         rtor2 = float(argv[13])
-        
+
         initial_dist = self.f_max
 
         world = b2WorldInterface(True)
@@ -61,14 +65,14 @@ class PushReward:
 
         ret1 = np.linalg.norm(np.array(self.gxy) - ret1)
         ret2 = np.linalg.norm(np.array(self.gxy2) - ret2)
-        return initial_dist - ret1 - ret2 
+        return initial_dist - ret1 - ret2
 
 
 def main():
     f = PushReward()
     x = np.random.uniform(f.xmin, f.xmax)
-    print('Input = {}'.format(x))
-    print('Output = {}'.format(f(x)))
+    print(('Input = {}'.format(x)))
+    print(('Output = {}'.format(f(x))))
 
 
 if __name__ == '__main__':

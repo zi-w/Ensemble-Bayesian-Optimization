@@ -1,4 +1,8 @@
-from itertools import chain, izip
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from itertools import chain
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -463,7 +467,7 @@ class Tiling(object):
         self.offset = offset
         if offset is None:
             self.offset = np.empty((ntiles.shape[1], ntilings))
-            for i in xrange(ntiles.shape[0]):
+            for i in range(ntiles.shape[0]):
                 self.offset[i, :] = -rnd_stream.random_sample(ntilings) / ntiles[0, i]
 
         if self.hashing == None:
@@ -578,10 +582,10 @@ class TileCoding(Projector):
         self.tilings = [Tiling(in_index, nt, t, self.state_range, rnd_stream, offset=o, hashing=h)
                         for in_index, nt, t, h, o
                         in zip(input_indices, ntiles, ntilings, hashing, offsets)]
-        self.__size = sum(map(lambda x: x.size, self.tilings))
+        self.__size = sum([x.size for x in self.tilings])
         self.bias_term = bias_term
         self.index_offset = np.zeros(len(ntilings), dtype='int')
-        self.index_offset[1:] = np.cumsum(map(lambda x: x.size, self.tilings[:-1]))
+        self.index_offset[1:] = np.cumsum([x.size for x in self.tilings[:-1]])
         self.index_offset = np.hstack([np.array([off] * t, dtype='int')
                                        for off, t in zip(self.index_offset, ntilings)])
 
@@ -759,7 +763,7 @@ def grid_of_points(state_range, num_centers):
     if isinstance(num_centers, int):
         num_centers = [num_centers] * state_range[0].shape[0]
     points = [np.linspace(start, stop, num, endpoint=True)
-              for start, stop, num in izip(state_range[0],
+              for start, stop, num in zip(state_range[0],
                                            state_range[1],
                                            num_centers)]
 

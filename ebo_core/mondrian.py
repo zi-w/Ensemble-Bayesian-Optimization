@@ -1,4 +1,8 @@
-import helper
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from . import helper
 import numpy as np
 
 
@@ -63,7 +67,7 @@ class MondrianTree(object):
                              for node in leaves])
             mask = np.maximum(prob[:, 1] - min_leaf_size, 0)
             if mask.sum() == 0:
-                print
+                print()
                 'Mondrian stopped at ', str(len(leaves)), ' number of leaves.'
                 break
 
@@ -90,7 +94,7 @@ class MondrianTree(object):
 
     def visualize(self):
         if self.leaves is None or self.X.shape[1] != 2:
-            print
+            print()
             'error: x shape is wrong or leaves is none.'
 
         # visaulize 2d mondrians
@@ -104,7 +108,7 @@ class MondrianTree(object):
         mondrian_colors = mondrian_colors / 255.0
         fig = plt.figure()
         ax = fig.add_subplot(111, aspect='equal')
-        print('number of leaves = {}'.format(len(self.leaves)))
+        print(('number of leaves = {}'.format(len(self.leaves))))
         for node in self.leaves:
             xy = node.x_range[0]
             xylen = node.x_range[1] - node.x_range[0]

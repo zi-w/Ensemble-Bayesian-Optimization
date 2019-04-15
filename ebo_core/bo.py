@@ -1,5 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
-from gibbs import GibbsSampler
+from .gibbs import GibbsSampler
 from scipy.optimize import minimize
 
 
@@ -63,7 +67,7 @@ def global_minimize(f, x_range, n, n_bo=1, n_bo_top_percent=1.0):
     ty = np.hstack((ty, res.fun))
     inds = ty.argsort()
     thres = np.ceil(n_bo * n_bo_top_percent).astype(int)
-    inds_of_inds = np.hstack((range(thres), np.random.permutation(range(thres, len(inds)))))
+    inds_of_inds = np.hstack((list(range(thres)), np.random.permutation(list(range(thres, len(inds))))))
     inds = inds[inds_of_inds[:n_bo]]
     return tx[inds, :]
 

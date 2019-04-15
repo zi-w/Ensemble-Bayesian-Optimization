@@ -1,4 +1,6 @@
-from itertools import izip
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import numpy as np
 import scipy.interpolate as si
@@ -50,11 +52,11 @@ class PointBSpline(Trajectory):
         self.tck, u = si.splprep(points, k=3)
 
         if start is not None:
-            for a, sv in izip(self.tck[1], start):
+            for a, sv in zip(self.tck[1], start):
                 a[0] = sv
 
         if goal is not None:
-            for a, gv in izip(self.tck[1], goal):
+            for a, gv in zip(self.tck[1], goal):
                 a[-1] = gv
 
     def get_points(self, t):
@@ -240,7 +242,7 @@ def plot_2d_rover(roverdomain, ngrid_points=100, ntraj_points=100, colormap='RdB
 
     # set title to be the total cost
     plt.title('traj cost: {0}'.format(traj_cost))
-    print('traj cost: {0}'.format(traj_cost))
+    print(('traj cost: {0}'.format(traj_cost)))
     # plot cost function
     cmesh = plt.pcolormesh(grid_points[0], grid_points[1], costs.reshape((ngrid_points, -1)), cmap=colormap)
     if draw_colorbar:
@@ -297,7 +299,7 @@ def plot_3d_forest_rover(roverdomain, rectangles, ntraj_points=100):
                (roverdomain.start[2], roverdomain.goal[2]), c='k')
 
     # plot traj
-    seg = (zip(traj_points[:-1, :], traj_points[1:, :]))
+    seg = (list(zip(traj_points[:-1, :], traj_points[1:, :])))
     ax.add_collection3d(Line3DCollection(seg, colors=[(0, 1., 0, 1.)] * len(seg)))
 
     # plot rectangles

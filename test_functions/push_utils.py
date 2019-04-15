@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 import pygame
 from Box2D import *
@@ -141,7 +145,7 @@ class end_effector:
                 list(self.hand.linearVelocity) + [self.hand.angularVelocity]
         if verbose:
             print_state = ["%.3f" % x for x in state]
-            print
+            print()
             "position, velocity: (%s), (%s) " % \
             ((", ").join(print_state[:3]), (", ").join(print_state[3:]))
 

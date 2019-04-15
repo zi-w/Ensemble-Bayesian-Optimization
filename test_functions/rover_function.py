@@ -1,4 +1,8 @@
-from rover_utils import RoverDomain, PointBSpline, ConstObstacleCost, NegGeom, AABoxes, UnionGeom, AdditiveCosts, \
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from .rover_utils import RoverDomain, PointBSpline, ConstObstacleCost, NegGeom, AABoxes, UnionGeom, AdditiveCosts, \
     ConstCost
 import numpy as np
 
@@ -245,8 +249,8 @@ def main():
     x_range = f.get_range()
 
     x = np.random.uniform(x_range[0], x_range[1])
-    print('Input = {}'.format(x))
-    print('Output = {}'.format(f(x)))
+    print(('Input = {}'.format(x)))
+    print(('Output = {}'.format(f(x))))
 
 
 if __name__ == "__main__":

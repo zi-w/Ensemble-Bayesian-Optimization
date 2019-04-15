@@ -1,10 +1,13 @@
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+
 import argparse
 import os
 
 import azure.storage.blob as azureblob
 try:
-   import cPickle as pickle
+   import pickle as pickle
 except:
    import pickle
 
@@ -40,7 +43,7 @@ if __name__ == '__main__':
 
   #print(res)
   pickle.dump(res, open(output_file, 'wb'))
-  
+
   print("bo_wrapper.py listing files:")
   for item in os.listdir('.'):
     print(item)

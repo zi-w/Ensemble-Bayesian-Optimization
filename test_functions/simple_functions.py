@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 
 import numpy as np
@@ -79,7 +83,7 @@ def sample_z(dx):
 
 
 def save_sampled_gp_funcs(dx, n=50, nfunc=1, isplot=1, dirnm='mytests'):
-    import cPickle as pic
+    import pickle as pic
     for i in range(nfunc):
         sigma = 0.01
         z = sample_z(dx)
