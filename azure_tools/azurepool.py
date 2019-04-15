@@ -18,7 +18,7 @@ from . import common.helpers
 import time
 
 try:
-    import pickle as pickle
+    import cPickle as pickle
 except:
     import pickle
 import sys
