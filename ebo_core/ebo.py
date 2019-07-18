@@ -1,10 +1,11 @@
 import os
 import time
 
-import helper
+import ebo_core.helper as helper
 import numpy as np
-from mondrian import MondrianTree
-from mypool import MyPool
+from ebo_core.mondrian import MondrianTree
+from ebo_core.mypool import MyPool
+from builtins import range
 
 try:
     import cPickle as pickle
@@ -50,8 +51,8 @@ class ebo(object):
 
     def run(self):
         x_range, T, B, dim_limit, min_leaf_size, max_n_leaves, n_bo, n_top = self.get_params()
-        tstart = self.X.shape[0] / B
-        for t in xrange(tstart, T):
+        tstart = self.X.shape[0] // B
+        for t in range(tstart, T):
             # search space partition
             ref = self.y.min() if self.y.shape[0] > 0 else None
             self.tree = MondrianTree(self.X, self.y, x_range, max_n_leaves, reference=ref)
@@ -61,7 +62,7 @@ class ebo(object):
             # this might be dangerous if high dimension and R>1
             tot_volumn = np.array([n.volumn for n in leaves]).sum()
             parameters = [[0, n.X, n.y, n.x_range, False,
-                           np.maximum(n_bo, np.ceil((tot_eval * n.volumn / tot_volumn)).astype(int)), self.options] for
+                           np.maximum(n_bo, np.ceil((tot_eval * n.volumn // tot_volumn)).astype(int)), self.options] for
                           n in leaves]
 
             # run bo learning in parallel
@@ -84,7 +85,7 @@ class ebo(object):
             newX = self.choose_newX(newX, newacf, n_top, B)
 
             # map again to evaluate the selected inputs
-            parameters = [[self.f, n.X, n.y, n.x_range, True, [x], self.options] for x in newX]
+            parameters = [[self.f, None, None, None, True, [x], self.options] for x in newX]
 
             newY = self.pool.map(parameters, 'eval' + str(t), not self.options['func_cheap'])
             # update X, y
@@ -99,8 +100,7 @@ class ebo(object):
         self.pause()
 
     def choose_newX(self, newX, newacf, n_top, B):
-        print
-        'start choosing newX'
+        print('start choosing newX')
         start = time.time()
         inds = newacf.argsort()
         if 'heuristic' in self.options and self.options['heuristic']:
@@ -143,8 +143,7 @@ class ebo(object):
             all_candidates = all_candidates[all_candidates != jbest]
             next_ind += 1
             rec.append(marginal)
-        print
-        'finished choosing newX, eplased time = ', time.time() - start
+        print('finished choosing newX, eplased time = ', time.time() - start)
 
         return newX[good_inds]
 
@@ -163,18 +162,18 @@ class ebo(object):
         if self.options['isplot']:
             plot_ebo(self.tree, newX, t)
         _, besty, cur = self.get_best()
-        print
-        't=', t, ', bestid=', cur, ', besty=', besty
-        print
-        'final z=', self.z, ' final k=', self.k
+        print('t=', t, ', bestid=', cur, ', besty=', besty)
+
+        print('final z=', self.z, ' final k=', self.k)
+
 
     def reload(self):
         fnm = self.options['save_file_name']
         if not os.path.isfile(fnm):
             return False
         self.X, self.y, self.z, self.k, self.timing = pickle.load(open(fnm))
-        print
-        'Successfully reloaded file.'
+        print('Successfully reloaded file.')
+
 
     # This will save the pool workers
     def pause(self):
@@ -191,8 +190,7 @@ class ebo(object):
         if not os.path.exists(dirnm):
             os.makedirs(dirnm)
         pickle.dump([self.X, self.y, self.z, self.k, self.timing], open(fnm, 'wb'))
-        print
-        'saving file... ', time.time() - start, ' seconds'
+        print('saving file... ', time.time() - start, ' seconds')
 
 
 def check_valid_options(options):

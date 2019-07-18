@@ -1,4 +1,4 @@
-from bo import bo
+from ebo_core.bo import bo
 
 
 class MyPool(object):

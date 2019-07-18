@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.matlib as nm
 from ebo_core.ebo import ebo
 from test_functions.simple_functions import plot_f, SampledGpFunc, sample_z
 import time
@@ -9,7 +10,7 @@ logging.basicConfig(filename='example.log',level=logging.DEBUG)
 dx = 2
 z = sample_z(dx)
 k = np.array([10]*dx)
-x_range = np.matlib.repmat([[0.],[1.]], 1, dx)
+x_range = nm.repmat([[0.],[1.]], 1, dx)
 sigma = 0.01
 n = 100
 f = SampledGpFunc(x_range, dx, z, k, n, sigma)
@@ -50,5 +51,5 @@ e = ebo(f, options)
 start = time.time()
 e.run()
 
-print "elapsed time: ", time.time() - start
+print("elapsed time: ", time.time() - start)
 

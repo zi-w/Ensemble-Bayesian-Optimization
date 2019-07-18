@@ -1,21 +1,24 @@
 import numpy as np
-from gibbs import GibbsSampler
+from ebo_core.gibbs import GibbsSampler
 from scipy.optimize import minimize
 
 
 class bo(object):
     def __init__(self, f, X, y, x_range, eval_only, extra, options):
         self.f = f
-        self.x_range = x_range
         self.options = options
-        self.well_defined = X.shape[0] > 0
-        self.solver = GibbsSampler(X, y, options)
         self.eval_only = eval_only
-        self.opt_n = options['opt_n']
-        self.dx = options['dx']
+
         if eval_only:
             self.newX = extra
         else:
+            self.x_range = x_range
+
+            self.well_defined = X.shape[0] > 0
+            self.solver = GibbsSampler(X, y, options)
+
+            self.opt_n = options['opt_n']
+            self.dx = options['dx']
             self.n_bo = extra
             self.opt_n = np.maximum(self.opt_n, self.n_bo * 2)
 

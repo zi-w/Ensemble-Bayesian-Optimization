@@ -1,4 +1,12 @@
-from itertools import chain, izip
+from __future__ import print_function
+from itertools import chain
+
+try:
+    import itertools.zip as zip
+except ImportError:
+    pass
+
+from builtins import range
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -463,7 +471,7 @@ class Tiling(object):
         self.offset = offset
         if offset is None:
             self.offset = np.empty((ntiles.shape[1], ntilings))
-            for i in xrange(ntiles.shape[0]):
+            for i in range(ntiles.shape[0]):
                 self.offset[i, :] = -rnd_stream.random_sample(ntilings) / ntiles[0, i]
 
         if self.hashing == None:
@@ -759,7 +767,7 @@ def grid_of_points(state_range, num_centers):
     if isinstance(num_centers, int):
         num_centers = [num_centers] * state_range[0].shape[0]
     points = [np.linspace(start, stop, num, endpoint=True)
-              for start, stop, num in izip(state_range[0],
+              for start, stop, num in zip(state_range[0],
                                            state_range[1],
                                            num_centers)]
 

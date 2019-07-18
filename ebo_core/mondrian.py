@@ -1,4 +1,4 @@
-import helper
+import ebo_core.helper as helper
 import numpy as np
 
 

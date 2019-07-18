@@ -1,9 +1,10 @@
-import helper
+import ebo_core.helper as helper
 import numpy as np
 import sklearn.random_projection as rp
 from gp_tools.gp import SparseFeatureGP, DenseFeatureGP, DenseKernelGP, SparseKernelGP
 from gp_tools.representation import TileCoding, IndexToBinarySparse, DenseKernel, DenseL1Kernel, SparseKernel, SparseRPTilecoding
-from scipy.misc import comb
+from scipy.special import comb
+from builtins import range
 
 
 # remember to set random seed somewhere
@@ -71,7 +72,7 @@ class GibbsSampler(object):
         all_cat = np.unique(self.z)
         if self.tilecap:
             hashing_mem = self.tilecap / len(all_cat) / nlayers
-            hashing = [rp.UNH(hashing_mem) for _ in xrange(len(all_cat))]
+            hashing = [rp.UNH(hashing_mem) for _ in range(len(all_cat))]
         for a in all_cat:
             inds = helper.find(self.z == a)
             indices.append(inds)
@@ -109,7 +110,7 @@ class GibbsSampler(object):
 
     # idea: can instead get log likelihood on different subset of data for gibbs
     def run(self, niter):
-        for i in xrange(niter):
+        for i in range(niter):
             # sample z w/ limit on size
             # random permute dimensions
             for d in np.random.permutation(range(self.xdim)):
@@ -130,7 +131,7 @@ class GibbsSampler(object):
                 other_cat = other_cat[np.logical_and(other_cat != zd_old, other_cat != -1)]
                 # otherwise, need to remove z[d] and add one additional category
                 if a_size > 0 and other_cat.size + 1 < self.n_add:
-                    for a in xrange(self.n_add):
+                    for a in range(self.n_add):
                         if (a not in other_cat) and (a != zd_old):
                             other_cat = np.append(other_cat, [a])
                             break

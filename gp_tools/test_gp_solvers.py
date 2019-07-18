@@ -1,8 +1,9 @@
+from __future__ import print_function
 import numpy as np
 import sklearn.random_projection as rp
-from gp import SparseFeatureGP, DenseFeatureGP, DenseKernelGP, SparseKernelGP
-from representation import TileCoding, IndexToBinarySparse, IndexToDense, DenseKernel, SparseKernel, SparseRPTilecoding
-
+from gp_tools.gp import SparseFeatureGP, DenseFeatureGP, DenseKernelGP, SparseKernelGP
+from gp_tools.representation import TileCoding, IndexToBinarySparse, IndexToDense, DenseKernel, SparseKernel, SparseRPTilecoding
+from builtins import range
 
 class RandomSinFn:
     def __init__(self, weights, periods):
@@ -61,8 +62,7 @@ def generate_rp_tilecoding_gps(X, y, sigma, tilecoding, random_proj, include_spa
                      ('Dense Kernel GP', dk_gp)]
     if include_sparse:
         sk_gp = SparseKernelGP(X, y, sigma=sigma, kern=sparsekern)
-        gps = gps + [('Sparse Feature GP', sf_gp),
-                     ('Sparse Kernel GP', sk_gp)]
+        gps = gps + [('Sparse Kernel GP', sk_gp)]
     return gps
 
 
@@ -74,21 +74,18 @@ def compare_nll(gps):
     all_equal = nll_equal.all()
     errors = 0
     if not all_equal:
-        for i in xrange(diff_nlls.shape[0]):
-            for j in xrange(i, diff_nlls.shape[1]):
+        for i in range(diff_nlls.shape[0]):
+            for j in range(i, diff_nlls.shape[1]):
                 if not nll_equal[i, j]:
                     errors = errors + 1
-                    print
-                    'ERROR: {0}, with nll {1}, differs beyond tolerance from {2}, with nll {3}'.format(
-                        gps[i][0], nlls[i], gps[j][0], nlls[j])
+                    print('ERROR: {0}, with nll {1}, differs beyond tolerance from {2}, with nll {3}'.format(gps[i][0], nlls[i], gps[j][0], nlls[j]))
     return errors
 
 
 def compare_mean_var(test_x, gps):
     results = []
     for n, gp in gps:
-        print
-        "Evaluting {0}".format(n)
+        print("Evaluting {0}".format(n))
         results.append(gp.predict(test_x))
 
     # check variance estimates are positive
@@ -96,8 +93,7 @@ def compare_mean_var(test_x, gps):
     for (mu, var), (n, gp) in zip(results, gps):
         if (var < 0).any():
             errors = errors + 1
-            print
-            'ERROR: Negative variance estimate found in {0}'.format(n)
+            print('ERROR: Negative variance estimate found in {0}'.format(n))
 
     all_mu = np.hstack([mu for mu, var in results])
     all_var = np.hstack([var for mu, var in results])
@@ -106,37 +102,31 @@ def compare_mean_var(test_x, gps):
     mu_equals = np.isclose(diff_mu, np.zeros_like(diff_mu))
     all_mu_equal = mu_equals.all()
     if not all_mu_equal:
-        for i in xrange(diff_mu.shape[0]):
-            for j in xrange(i, diff_mu.shape[1]):
+        for i in range(diff_mu.shape[0]):
+            for j in range(i, diff_mu.shape[1]):
                 if not mu_equals[i, j]:
                     errors = errors + 1
-                    print
-                    'ERROR: {0} and {1} mean prediction differs, found a max absolute difference of {2}'.format(
-                        gps[i][0], gps[j][0], diff_mu[i, j])
+                    print('ERROR: {0} and {1} mean prediction differs, found a max absolute difference of {2}'.format(gps[i][0], gps[j][0], diff_mu[i, j]))
 
     diff_var = np.abs(all_var[:, None, :] - all_var[:, :, None]).max(axis=0)
     var_equals = np.isclose(diff_var, np.zeros_like(diff_var))
     all_var_equal = var_equals.all()
     if not all_var_equal:
-        for i in xrange(diff_var.shape[0]):
-            for j in xrange(i, diff_var.shape[1]):
+        for i in range(diff_var.shape[0]):
+            for j in range(i, diff_var.shape[1]):
                 if not var_equals[i, j]:
                     errors = errors + 1
-                    print
-                    'ERROR: {0} and {1} variance prediction differs, found a max absolute difference of {2}'.format(
-                        gps[i][0], gps[j][0], diff_var[i, j])
+                    print('ERROR: {0} and {1} variance prediction differs, found a max absolute difference of {2}'.format(gps[i][0], gps[j][0], diff_var[i, j]))
     return errors
 
 
 def fit_gps(test_name, gps):
     for n, gp in gps:
         try:
-            print
-            "Fitting {0} for test '{1}'".format(n, test_name)
+            print("Fitting {0} for test '{1}'".format(n, test_name))
             gp.fit()
         except:
-            print
-            "Exception raise while fitting {0} in test '{1}'".format(n, test_name)
+            print("Exception raise while fitting {0} in test '{1}'".format(n, test_name))
             raise
 
 
@@ -154,10 +144,8 @@ def create_test_data1(rnd_stream):
 def test1(rnd_stream):
     test_name = 'test1'
 
-    print
-    '##########################################################'
-    print
-    "Starting test '{0}'".format(test_name)
+    print('##########################################################')
+    print("Starting test '{0}'".format(test_name))
 
     t1_sigma = 0.1
     t1_ntiles = 5
@@ -179,8 +167,7 @@ def test1(rnd_stream):
     errors = compare_nll(gps)
     errors = errors + compare_mean_var(test_x, gps)
 
-    print
-    "Ending test '{0}' with {1} errors".format(test_name, errors)
+    print("Ending test '{0}' with {1} errors".format(test_name, errors))
     return errors
 
 
@@ -205,10 +192,8 @@ def create_test_data2(rnd_stream):
 def test2(rnd_stream):
     test_name = 'test2'
 
-    print
-    '##########################################################'
-    print
-    "Starting test '{0}'".format(test_name)
+    print('##########################################################')
+    print("Starting test '{0}'".format(test_name))
 
     t2_sigma = 0.1
     t2_ntiles = 5
@@ -230,8 +215,7 @@ def test2(rnd_stream):
     errors = compare_nll(gps)
     errors = errors + compare_mean_var(test_x, gps)
 
-    print
-    "Ending test '{0}' with {1} errors".format(test_name, errors)
+    print("Ending test '{0}' with {1} errors".format(test_name, errors))
     return errors
 
 
@@ -256,10 +240,8 @@ def create_test_data3(rnd_stream):
 def test3(rnd_stream):
     test_name = 'test3'
 
-    print
-    '##########################################################'
-    print
-    "Starting test '{0}'".format(test_name)
+    print('##########################################################')
+    print("Starting test '{0}'".format(test_name))
 
     t3_sigma = 0.1
     t3_ntiles = 10
@@ -287,8 +269,7 @@ def test3(rnd_stream):
     errors = compare_nll(gps)
     errors = errors + compare_mean_var(test_x, gps)
 
-    print
-    "Ending test '{0}' with {1} errors".format(test_name, errors)
+    print("Ending test '{0}' with {1} errors".format(test_name, errors))
     return errors
 
 
@@ -313,10 +294,8 @@ def create_test_data4(rnd_stream):
 def test4(rnd_stream):
     test_name = 'test4'
 
-    print
-    '##########################################################'
-    print
-    "Starting test '{0}'".format(test_name)
+    print('##########################################################')
+    print("Starting test '{0}'".format(test_name))
 
     t4_sigma = 0.1
     t4_ntiles = 10
@@ -338,31 +317,27 @@ def test4(rnd_stream):
     errors = compare_nll(gps)
     errors = errors + compare_mean_var(test_x, gps)
 
-    print
-    "Ending test '{0}' with {1} errors".format(test_name, errors)
+    print("Ending test '{0}' with {1} errors".format(test_name, errors))
     return errors
 
 
-print
-'Starting GP solver tests'
+print('Starting GP solver tests')
 
 # for reproducibility, create a seed and use the corresponding pseudorandom generator
 seed = np.random.randint(np.iinfo(np.int32).max)
 rnd_stream = np.random.RandomState(seed)
-print
-'seed used was {0}'.format(seed)
+
+
+print('seed used was {0}'.format(seed))
 
 # run test and count errors
-errors = sum([test1(rnd_stream), test2(rnd_stream)]
+errors = sum([test1(rnd_stream), test2(rnd_stream)])
 
-print
-'##########################################################'
-print
-'TEST COMPLETE'
+print('##########################################################')
+
+print('TEST COMPLETE')
 
 if errors > 0:
-    print
-'TOTAL ERROR COUNT: {0}'.format(errors)
+    print('TOTAL ERROR COUNT: {0}'.format(errors))
 else:
-print
-'No errors found'
+    print('No errors found')
